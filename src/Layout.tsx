@@ -5,9 +5,11 @@ import {
   Text,
   NavLink,
   ScrollArea,
-  useMantineTheme,
+  Burger,
 } from '@mantine/core';
 import { IconCurrencyDollar, IconExchange } from '@tabler/icons-react';
+import { StyledAppShell } from './components/StyledAppShell';
+import { useDisclosure } from '@mantine/hooks';
 
 export type Section = 'rates' | 'converter';
 
@@ -16,17 +18,40 @@ export const Layout: React.FC<{
   section: Section;
   onSectionChange: (section: Section) => void;
 }> = ({ children, section, onSectionChange }) => {
-  const theme = useMantineTheme();
+  const [mobileOpened, { toggle: toggleMobile, close: closeMobile }] =
+    useDisclosure();
+  const [desktopOpened, { toggle: toggleDesktop }] = useDisclosure(true);
+
+  const handleSectionChange = (newSection: Section) => {
+    onSectionChange(newSection);
+    closeMobile();
+  };
+
   return (
-    <AppShell
+    <StyledAppShell
       header={{ height: 60 }}
-      navbar={{ width: 220, breakpoint: 'sm', collapsed: { mobile: false } }}
-      padding="md"
-      bg={theme.colors.gray[0]}
+      navbar={{
+        width: 220,
+        breakpoint: 'sm',
+        collapsed: { mobile: !mobileOpened, desktop: !desktopOpened },
+      }}
     >
       <AppShell.Header>
         <AppShell.Header px="md">
-          <Group h="100%" px="md" justify="space-between">
+          <Group h="100%" px="sm" justify="flex-start">
+            <Burger
+              opened={mobileOpened}
+              onClick={toggleMobile}
+              hiddenFrom="sm"
+              size="sm"
+            />
+            <Burger
+              opened={desktopOpened}
+              onClick={toggleDesktop}
+              visibleFrom="sm"
+              size="sm"
+            />
+
             <Text fw={700} size="lg">
               Momence Assignment - Currency Converter - Michal Filip
             </Text>
@@ -40,18 +65,18 @@ export const Layout: React.FC<{
               label="Currency Rates"
               leftSection={<IconCurrencyDollar size={18} />}
               active={section === 'rates'}
-              onClick={() => onSectionChange('rates')}
+              onClick={() => handleSectionChange('rates')}
             />
             <NavLink
               label="Currency Converter"
               leftSection={<IconExchange size={18} />}
               active={section === 'converter'}
-              onClick={() => onSectionChange('converter')}
+              onClick={() => handleSectionChange('converter')}
             />
           </AppShell.Section>
         </AppShell.Navbar>
       </AppShell.Navbar>
       <AppShell.Main>{children}</AppShell.Main>
-    </AppShell>
+    </StyledAppShell>
   );
 };

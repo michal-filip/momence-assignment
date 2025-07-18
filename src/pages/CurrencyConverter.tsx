@@ -1,7 +1,5 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useMemo, useState } from 'react';
 import {
-  Paper,
   Title,
   Group,
   NumberInput,
@@ -9,78 +7,44 @@ import {
   Button,
   Alert,
 } from '@mantine/core';
-
-const API_URL = '/rates';
-
-function parseRates(data: string) {
-  // The rates are in a text format, skip header lines and parse the table
-  const lines = data.split('\n').filter(Boolean);
-  const startIdx = lines.findIndex((line) => line.startsWith('Country|'));
-  if (startIdx === -1) return [];
-  const headers = lines[startIdx].split('|');
-  return lines.slice(startIdx + 1).map((line) => {
-    const values = line.split('|');
-    const obj: Record<string, string> = {};
-    headers.forEach((h, i) => (obj[h] = values[i]));
-    return obj;
-  });
-}
-
-const RatesDataContext = createContext<ReturnType<typeof useQuery> | undefined>(undefined);
-
-export const RatesDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const query = useQuery({
-    queryKey: ['currency-rates'],
-    queryFn: async () => {
-      const res = await fetch(API_URL);
-      if (!res.ok) throw new Error('Failed to fetch rates');
-      const text = await res.text();
-      return parseRates(text);
-    },
-  });
-  return <RatesDataContext.Provider value={query}>{children}</RatesDataContext.Provider>;
-};
-
-export function useRatesData() {
-  const ctx = useContext(RatesDataContext);
-  if (!ctx) throw new Error('useRatesData must be used within RatesDataProvider');
-  return ctx;
-}
+import { useRatesData } from '../utils/ratesData';
+import { QueryDataWrapper } from '../components/QueryDataWrapper';
+import { StyledPaper } from '../components/StyledPaper';
 
 export const CurrencyConverter: React.FC<{
-  from?: string;
-  to?: string;
-}> = ({ from: fromProp, to: toProp }) => {
+  defaultFrom?: string;
+  defaultTo?: string;
+}> = ({ defaultFrom = 'CZK', defaultTo }) => {
   const { data, isLoading, error } = useRatesData();
 
-  // Add CZK as the base currency
-  const allCodes = Array.isArray(data) ? Array.from(new Set(data.map((row: any) => row.Code))) : [];
-  if (!allCodes.includes('CZK')) allCodes.unshift('CZK');
-  const currencyOptions = allCodes.map((code) => ({ value: code, label: code }));
+  const currencyOptions = useMemo(() => {
+    const allCodes = data
+      ? Array.from(new Set(data.map((row) => row.Code)))
+      : [];
 
-  // Preselect CZK in 'From' field by default, or use prop if provided
+    // Add CZK as the base currency
+    return ['CZK', ...allCodes].map((code) => ({
+      value: code,
+      label: code,
+    }));
+  }, [data]);
+
   const [amount, setAmount] = useState<number | ''>('');
-  const [from, setFrom] = useState<string>(fromProp || 'CZK');
-  const [to, setTo] = useState<string>(toProp || '');
+  const [from, setFrom] = useState(defaultFrom);
+  const [to, setTo] = useState(defaultTo || '');
   const [result, setResult] = useState<number | null>(null);
 
-  // Update fields if props change
-  useEffect(() => {
-    if (fromProp) setFrom(fromProp);
-    if (toProp) setTo(toProp);
-    setResult(null);
-  }, [fromProp, toProp]);
-
-  // Hide result when any parameter changes
   const handleAmountChange = (val: string | number) => {
     // Only allow numbers or empty string
     setAmount(typeof val === 'number' || val === '' ? val : '');
     setResult(null);
   };
+
   const handleFromChange = (val: string | null) => {
     setFrom(val || '');
     setResult(null);
   };
+
   const handleToChange = (val: string | null) => {
     setTo(val || '');
     setResult(null);
@@ -92,14 +56,14 @@ export const CurrencyConverter: React.FC<{
     let fromRate = 1,
       toRate = 1;
     if (from !== 'CZK') {
-      const fromRateObj = data.find((row: any) => row.Code === from);
+      const fromRateObj = data.find((row) => row.Code === from);
       if (!fromRateObj) return;
       fromRate =
         parseFloat(fromRateObj.Rate.replace(',', '.')) /
         parseFloat(fromRateObj.Amount);
     }
     if (to !== 'CZK') {
-      const toRateObj = data.find((row: any) => row.Code === to);
+      const toRateObj = data.find((row) => row.Code === to);
       if (!toRateObj) return;
       toRate =
         parseFloat(toRateObj.Rate.replace(',', '.')) /
@@ -112,50 +76,55 @@ export const CurrencyConverter: React.FC<{
   };
 
   return (
-    <Paper p="md" withBorder style={{ flex: 1 }}>
+    <StyledPaper>
       <Title order={2} mb="md">
         Currency Converter
       </Title>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleConvert();
-        }}
-      >
-        <Group mb="md" grow>
-          <NumberInput
-            label="Amount"
-            value={amount}
-            onChange={handleAmountChange}
-            min={0}
-            required
-          />
-          <Select
-            label="From"
-            data={currencyOptions}
-            value={from}
-            onChange={handleFromChange}
-            required
-            searchable
-          />
-          <Select
-            label="To"
-            data={currencyOptions}
-            value={to}
-            onChange={handleToChange}
-            required
-            searchable
-          />
-        </Group>
-        <Button type="submit" disabled={!amount || !from || !to || !Array.isArray(data)}>
-          Convert
-        </Button>
-      </form>
-      {result !== null && (
-        <Alert color="green" mt="md">
-          {amount} {from} = {result.toFixed(4)} {to}
-        </Alert>
-      )}
-    </Paper>
+      <QueryDataWrapper isLoading={isLoading} error={error}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleConvert();
+          }}
+        >
+          <Group mb="md" grow>
+            <NumberInput
+              label="Amount"
+              value={amount}
+              onChange={handleAmountChange}
+              min={0}
+              required
+            />
+            <Select
+              label="From"
+              data={currencyOptions}
+              value={from}
+              onChange={handleFromChange}
+              required
+              searchable
+            />
+            <Select
+              label="To"
+              data={currencyOptions}
+              value={to}
+              onChange={handleToChange}
+              required
+              searchable
+            />
+          </Group>
+          <Button
+            type="submit"
+            disabled={!amount || !from || !to || !Array.isArray(data)}
+          >
+            Convert
+          </Button>
+        </form>
+        {result !== null && (
+          <Alert color="green" mt="md">
+            {amount} {from} = {result.toFixed(4)} {to}
+          </Alert>
+        )}
+      </QueryDataWrapper>
+    </StyledPaper>
   );
 };
