@@ -10,7 +10,7 @@ import {
   Alert,
 } from '@mantine/core';
 
-const API_URL = 'http://localhost:3001/rates';
+const API_URL = '/rates';
 
 function parseRates(data: string) {
   // The rates are in a text format, skip header lines and parse the table
@@ -43,7 +43,10 @@ export const CurrencyConverter: React.FC<{
   // Add CZK as the base currency
   const allCodes = data ? Array.from(new Set(data.map((row) => row.Code))) : [];
   if (!allCodes.includes('CZK')) allCodes.unshift('CZK');
-  const currencyOptions = allCodes.map((code) => ({ value: code, label: code }));
+  const currencyOptions = allCodes.map((code) => ({
+    value: code,
+    label: code,
+  }));
 
   // Preselect CZK in 'From' field by default, or use prop if provided
   const [amount, setAmount] = useState<number | ''>('');
