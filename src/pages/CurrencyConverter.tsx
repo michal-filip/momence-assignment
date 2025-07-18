@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Paper,
@@ -26,11 +26,10 @@ function parseRates(data: string) {
   });
 }
 
-export const CurrencyConverter: React.FC<{
-  from?: string;
-  to?: string;
-}> = ({ from: fromProp, to: toProp }) => {
-  const { data, isLoading, error } = useQuery({
+const RatesDataContext = createContext<ReturnType<typeof useQuery> | undefined>(undefined);
+
+export const RatesDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const query = useQuery({
     queryKey: ['currency-rates'],
     queryFn: async () => {
       const res = await fetch(API_URL);
@@ -39,14 +38,25 @@ export const CurrencyConverter: React.FC<{
       return parseRates(text);
     },
   });
+  return <RatesDataContext.Provider value={query}>{children}</RatesDataContext.Provider>;
+};
+
+export function useRatesData() {
+  const ctx = useContext(RatesDataContext);
+  if (!ctx) throw new Error('useRatesData must be used within RatesDataProvider');
+  return ctx;
+}
+
+export const CurrencyConverter: React.FC<{
+  from?: string;
+  to?: string;
+}> = ({ from: fromProp, to: toProp }) => {
+  const { data, isLoading, error } = useRatesData();
 
   // Add CZK as the base currency
-  const allCodes = data ? Array.from(new Set(data.map((row) => row.Code))) : [];
+  const allCodes = Array.isArray(data) ? Array.from(new Set(data.map((row: any) => row.Code))) : [];
   if (!allCodes.includes('CZK')) allCodes.unshift('CZK');
-  const currencyOptions = allCodes.map((code) => ({
-    value: code,
-    label: code,
-  }));
+  const currencyOptions = allCodes.map((code) => ({ value: code, label: code }));
 
   // Preselect CZK in 'From' field by default, or use prop if provided
   const [amount, setAmount] = useState<number | ''>('');
@@ -62,33 +72,34 @@ export const CurrencyConverter: React.FC<{
   }, [fromProp, toProp]);
 
   // Hide result when any parameter changes
-  const handleAmountChange = (val: number | '') => {
-    setAmount(val);
+  const handleAmountChange = (val: string | number) => {
+    // Only allow numbers or empty string
+    setAmount(typeof val === 'number' || val === '' ? val : '');
     setResult(null);
   };
-  const handleFromChange = (val: string) => {
-    setFrom(val);
+  const handleFromChange = (val: string | null) => {
+    setFrom(val || '');
     setResult(null);
   };
-  const handleToChange = (val: string) => {
-    setTo(val);
+  const handleToChange = (val: string | null) => {
+    setTo(val || '');
     setResult(null);
   };
 
   const handleConvert = () => {
-    if (!data || !amount || !from || !to) return;
+    if (!Array.isArray(data) || !amount || !from || !to) return;
     // Handle CZK as base currency
     let fromRate = 1,
       toRate = 1;
     if (from !== 'CZK') {
-      const fromRateObj = data.find((row) => row.Code === from);
+      const fromRateObj = data.find((row: any) => row.Code === from);
       if (!fromRateObj) return;
       fromRate =
         parseFloat(fromRateObj.Rate.replace(',', '.')) /
         parseFloat(fromRateObj.Amount);
     }
     if (to !== 'CZK') {
-      const toRateObj = data.find((row) => row.Code === to);
+      const toRateObj = data.find((row: any) => row.Code === to);
       if (!toRateObj) return;
       toRate =
         parseFloat(toRateObj.Rate.replace(',', '.')) /
@@ -136,7 +147,7 @@ export const CurrencyConverter: React.FC<{
             searchable
           />
         </Group>
-        <Button type="submit" disabled={!amount || !from || !to || !data}>
+        <Button type="submit" disabled={!amount || !from || !to || !Array.isArray(data)}>
           Convert
         </Button>
       </form>

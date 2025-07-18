@@ -1,5 +1,5 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useRatesData } from './CurrencyConverter';
 import {
   Table,
   Loader,
@@ -10,35 +10,11 @@ import {
   Group,
 } from '@mantine/core';
 
-const API_URL = 'http://localhost:3001/rates';
-
-function parseRates(data: string) {
-  // The rates are in a text format, skip header lines and parse the table
-  const lines = data.split('\n').filter(Boolean);
-  const startIdx = lines.findIndex((line) => line.startsWith('Country|'));
-  if (startIdx === -1) return [];
-  const headers = lines[startIdx].split('|');
-  return lines.slice(startIdx + 1).map((line) => {
-    const values = line.split('|');
-    const obj: Record<string, string> = {};
-    headers.forEach((h, i) => (obj[h] = values[i]));
-    return obj;
-  });
-}
-
 export const CurrencyRates: React.FC<{
   onConvertFrom: (code: string) => void;
   onConvertTo: (code: string) => void;
 }> = ({ onConvertFrom, onConvertTo }) => {
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['currency-rates'],
-    queryFn: async () => {
-      const res = await fetch(API_URL);
-      if (!res.ok) throw new Error('Failed to fetch rates');
-      const text = await res.text();
-      return parseRates(text);
-    },
-  });
+  const { data, isLoading, error } = useRatesData();
 
   return (
     <Paper p="md" withBorder style={{ flex: 1 }}>
