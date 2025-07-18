@@ -28,7 +28,7 @@ export const Layout: React.FC<{
         <AppShell.Header px="md">
           <Group h="100%" px="md" justify="space-between">
             <Text fw={700} size="lg">
-              Momence Assignment
+              Momence Assignment - Currency Converter - Michal Filip
             </Text>
           </Group>
         </AppShell.Header>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Paper,
@@ -26,7 +26,10 @@ function parseRates(data: string) {
   });
 }
 
-export const CurrencyConverter: React.FC = () => {
+export const CurrencyConverter: React.FC<{
+  from?: string;
+  to?: string;
+}> = ({ from: fromProp, to: toProp }) => {
   const { data, isLoading, error } = useQuery({
     queryKey: ['currency-rates'],
     queryFn: async () => {
@@ -37,30 +40,57 @@ export const CurrencyConverter: React.FC = () => {
     },
   });
 
+  // Add CZK as the base currency
+  const allCodes = data ? Array.from(new Set(data.map((row) => row.Code))) : [];
+  if (!allCodes.includes('CZK')) allCodes.unshift('CZK');
+  const currencyOptions = allCodes.map((code) => ({ value: code, label: code }));
+
+  // Preselect CZK in 'From' field by default, or use prop if provided
   const [amount, setAmount] = useState<number | ''>('');
-  const [from, setFrom] = useState<string>('');
-  const [to, setTo] = useState<string>('');
+  const [from, setFrom] = useState<string>(fromProp || 'CZK');
+  const [to, setTo] = useState<string>(toProp || '');
   const [result, setResult] = useState<number | null>(null);
 
-  const currencyOptions = data
-    ? Array.from(new Set(data.map((row) => row.Code))).map((code) => ({
-        value: code,
-        label: code,
-      }))
-    : [];
+  // Update fields if props change
+  useEffect(() => {
+    if (fromProp) setFrom(fromProp);
+    if (toProp) setTo(toProp);
+    setResult(null);
+  }, [fromProp, toProp]);
+
+  // Hide result when any parameter changes
+  const handleAmountChange = (val: number | '') => {
+    setAmount(val);
+    setResult(null);
+  };
+  const handleFromChange = (val: string) => {
+    setFrom(val);
+    setResult(null);
+  };
+  const handleToChange = (val: string) => {
+    setTo(val);
+    setResult(null);
+  };
 
   const handleConvert = () => {
     if (!data || !amount || !from || !to) return;
-    const fromRateObj = data.find((row) => row.Code === from);
-    const toRateObj = data.find((row) => row.Code === to);
-    if (!fromRateObj || !toRateObj) return;
-    // CNB rates are per Amount units of currency to CZK
-    const fromRate =
-      parseFloat(fromRateObj.Rate.replace(',', '.')) /
-      parseFloat(fromRateObj.Amount);
-    const toRate =
-      parseFloat(toRateObj.Rate.replace(',', '.')) /
-      parseFloat(toRateObj.Amount);
+    // Handle CZK as base currency
+    let fromRate = 1,
+      toRate = 1;
+    if (from !== 'CZK') {
+      const fromRateObj = data.find((row) => row.Code === from);
+      if (!fromRateObj) return;
+      fromRate =
+        parseFloat(fromRateObj.Rate.replace(',', '.')) /
+        parseFloat(fromRateObj.Amount);
+    }
+    if (to !== 'CZK') {
+      const toRateObj = data.find((row) => row.Code === to);
+      if (!toRateObj) return;
+      toRate =
+        parseFloat(toRateObj.Rate.replace(',', '.')) /
+        parseFloat(toRateObj.Amount);
+    }
     // Convert from -> CZK -> to
     const czk = (amount as number) * fromRate;
     const converted = czk / toRate;
@@ -82,7 +112,7 @@ export const CurrencyConverter: React.FC = () => {
           <NumberInput
             label="Amount"
             value={amount}
-            onChange={setAmount}
+            onChange={handleAmountChange}
             min={0}
             required
           />
@@ -90,7 +120,7 @@ export const CurrencyConverter: React.FC = () => {
             label="From"
             data={currencyOptions}
             value={from}
-            onChange={setFrom}
+            onChange={handleFromChange}
             required
             searchable
           />
@@ -98,7 +128,7 @@ export const CurrencyConverter: React.FC = () => {
             label="To"
             data={currencyOptions}
             value={to}
-            onChange={setTo}
+            onChange={handleToChange}
             required
             searchable
           />

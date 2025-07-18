@@ -11,12 +11,27 @@ const queryClient = new QueryClient();
 
 const App: React.FC = () => {
   const [section, setSection] = useState<Section>('rates');
+  const [converterState, setConverterState] = useState<{ from?: string; to?: string }>({});
+
   return (
     <QueryClientProvider client={queryClient}>
       <MantineProvider>
         <Layout section={section} onSectionChange={setSection}>
-          {section === 'rates' && <CurrencyRates />}
-          {section === 'converter' && <CurrencyConverter />}
+          {section === 'rates' && (
+            <CurrencyRates
+              onConvertFrom={(code) => {
+                setConverterState({ from: code, to: 'CZK' });
+                setSection('converter');
+              }}
+              onConvertTo={(code) => {
+                setConverterState({ from: 'CZK', to: code });
+                setSection('converter');
+              }}
+            />
+          )}
+          {section === 'converter' && (
+            <CurrencyConverter from={converterState.from} to={converterState.to} />
+          )}
         </Layout>
       </MantineProvider>
     </QueryClientProvider>

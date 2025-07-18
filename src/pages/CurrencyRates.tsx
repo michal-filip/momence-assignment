@@ -1,6 +1,14 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Table, Loader, Alert, Paper, Title } from '@mantine/core';
+import {
+  Table,
+  Loader,
+  Alert,
+  Paper,
+  Title,
+  Button,
+  Group,
+} from '@mantine/core';
 
 const API_URL = 'http://localhost:3001/rates';
 
@@ -18,7 +26,10 @@ function parseRates(data: string) {
   });
 }
 
-export const CurrencyRates: React.FC = () => {
+export const CurrencyRates: React.FC<{
+  onConvertFrom: (code: string) => void;
+  onConvertTo: (code: string) => void;
+}> = ({ onConvertFrom, onConvertTo }) => {
   const { data, isLoading, error } = useQuery({
     queryKey: ['currency-rates'],
     queryFn: async () => {
@@ -53,6 +64,7 @@ export const CurrencyRates: React.FC = () => {
               <Table.Th>Amount</Table.Th>
               <Table.Th>Code</Table.Th>
               <Table.Th>Rate</Table.Th>
+              <Table.Th>Actions</Table.Th>
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
@@ -63,6 +75,24 @@ export const CurrencyRates: React.FC = () => {
                 <Table.Td>{row.Amount}</Table.Td>
                 <Table.Td>{row.Code}</Table.Td>
                 <Table.Td>{row.Rate}</Table.Td>
+                <Table.Td>
+                  <Group gap="xs">
+                    <Button
+                      color="red"
+                      size="xs"
+                      onClick={() => onConvertFrom(row.Code)}
+                    >
+                      convert from
+                    </Button>
+                    <Button
+                      color="green"
+                      size="xs"
+                      onClick={() => onConvertTo(row.Code)}
+                    >
+                      convert to
+                    </Button>
+                  </Group>
+                </Table.Td>
               </Table.Tr>
             ))}
           </Table.Tbody>
