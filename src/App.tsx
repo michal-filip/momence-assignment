@@ -1,19 +1,22 @@
 import React from 'react';
 import { Layout } from './Layout';
 import { MantineProvider } from '@mantine/core';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import '@mantine/core/styles.css';
+import { CurrencyRates } from './pages/CurrencyRates';
+
+const queryClient = new QueryClient();
 
 const App: React.FC = () => {
   return (
-    <MantineProvider>
-      <Layout>
-        <div>
-          <h1>Welcome!</h1>
-          <p>Start building your currency converter app here.</p>
-        </div>
-      </Layout>
-    </MantineProvider>
+    <QueryClientProvider client={queryClient}>
+      <MantineProvider>
+        <Layout>
+          <CurrencyRates />
+        </Layout>
+      </MantineProvider>
+    </QueryClientProvider>
   );
 };
 

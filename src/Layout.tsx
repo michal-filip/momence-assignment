@@ -10,7 +10,6 @@ import {
 import { IconCurrencyDollar, IconHome } from '@tabler/icons-react';
 
 const navLinks = [
-  { label: 'Dashboard', icon: <IconHome size={18} />, link: '#' },
   {
     label: 'Currency Rates',
     icon: <IconCurrencyDollar size={18} />,
