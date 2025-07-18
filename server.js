@@ -1,9 +1,12 @@
 const express = require('express');
 const https = require('https');
-const http = require('http');
+const path = require('path');
 const app = express();
 
 const PORT = process.env.PORT || 3001;
+
+// Serve static files from the dist directory
+app.use(express.static(path.join(__dirname, 'dist')));
 
 // Simple proxy endpoint for CNB
 app.get('/rates', (req, res) => {
@@ -25,6 +28,11 @@ app.get('/rates', (req, res) => {
     });
 });
 
+// For any other route, serve index.html (SPA fallback)
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
+
 app.listen(PORT, () => {
-  console.log(`Proxy server running on http://localhost:${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });
