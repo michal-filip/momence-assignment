@@ -7,19 +7,15 @@ import {
   ScrollArea,
   useMantineTheme,
 } from '@mantine/core';
-import { IconCurrencyDollar, IconHome } from '@tabler/icons-react';
+import { IconCurrencyDollar, IconExchange } from '@tabler/icons-react';
 
-const navLinks = [
-  {
-    label: 'Currency Rates',
-    icon: <IconCurrencyDollar size={18} />,
-    link: '#',
-  },
-];
+export type Section = 'rates' | 'converter';
 
-export const Layout: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export const Layout: React.FC<{
+  children: React.ReactNode;
+  section: Section;
+  onSectionChange: (section: Section) => void;
+}> = ({ children, section, onSectionChange }) => {
   const theme = useMantineTheme();
   return (
     <AppShell
@@ -34,21 +30,24 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({
             <Text fw={700} size="lg">
               Momence Assignment
             </Text>
-            {/* Add user/profile/actions here if needed */}
           </Group>
         </AppShell.Header>
       </AppShell.Header>
       <AppShell.Navbar>
         <AppShell.Navbar p="md">
           <AppShell.Section grow component={ScrollArea}>
-            {navLinks.map((item) => (
-              <NavLink
-                key={item.label}
-                label={item.label}
-                leftSection={item.icon}
-                href={item.link}
-              />
-            ))}
+            <NavLink
+              label="Currency Rates"
+              leftSection={<IconCurrencyDollar size={18} />}
+              active={section === 'rates'}
+              onClick={() => onSectionChange('rates')}
+            />
+            <NavLink
+              label="Currency Converter"
+              leftSection={<IconExchange size={18} />}
+              active={section === 'converter'}
+              onClick={() => onSectionChange('converter')}
+            />
           </AppShell.Section>
         </AppShell.Navbar>
       </AppShell.Navbar>

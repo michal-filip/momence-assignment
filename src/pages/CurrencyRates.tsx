@@ -30,7 +30,7 @@ export const CurrencyRates: React.FC = () => {
   });
 
   return (
-    <Paper p="md" withBorder>
+    <Paper p="md" withBorder style={{ flex: 1 }}>
       <Title order={2} mb="md">
         Currency Rates
       </Title>
