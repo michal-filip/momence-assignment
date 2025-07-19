@@ -29,26 +29,26 @@ export const CurrencyRates: React.FC<{
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
-              {data.map((row, idx) => (
-                <Table.Tr key={row.Code + idx}>
-                  <Table.Td>{row.Country}</Table.Td>
-                  <Table.Td>{row.Currency}</Table.Td>
-                  <Table.Td>{row.Amount}</Table.Td>
-                  <Table.Td>{row.Code}</Table.Td>
-                  <Table.Td>{row.Rate}</Table.Td>
+              {data.map(({ Code, Country, Currency, Amount, Rate }, idx) => (
+                <Table.Tr key={Code + idx}>
+                  <Table.Td>{Country}</Table.Td>
+                  <Table.Td>{Currency}</Table.Td>
+                  <Table.Td>{Amount}</Table.Td>
+                  <Table.Td>{Code}</Table.Td>
+                  <Table.Td>{Rate}</Table.Td>
                   <Table.Td>
                     <Group gap="xs">
                       <Button
                         color="red"
                         size="xs"
-                        onClick={() => onConvertFrom(row.Code)}
+                        onClick={() => onConvertFrom(Code)}
                       >
                         convert from
                       </Button>
                       <Button
                         color="green"
                         size="xs"
-                        onClick={() => onConvertTo(row.Code)}
+                        onClick={() => onConvertTo(Code)}
                       >
                         convert to
                       </Button>

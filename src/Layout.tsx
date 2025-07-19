@@ -18,13 +18,12 @@ export const Layout: React.FC<{
   section: Section;
   onSectionChange: (section: Section) => void;
 }> = ({ children, section, onSectionChange }) => {
-  const [mobileOpened, { toggle: toggleMobile, close: closeMobile }] =
-    useDisclosure();
-  const [desktopOpened, { toggle: toggleDesktop }] = useDisclosure(true);
+  const [mobileOpened, mobileDisclosure] = useDisclosure();
+  const [desktopOpened, desktopDisclosure] = useDisclosure(true);
 
   const handleSectionChange = (newSection: Section) => {
     onSectionChange(newSection);
-    closeMobile();
+    mobileDisclosure.close();
   };
 
   return (
@@ -41,19 +40,19 @@ export const Layout: React.FC<{
           <Group h="100%" px="sm" justify="flex-start">
             <Burger
               opened={mobileOpened}
-              onClick={toggleMobile}
+              onClick={mobileDisclosure.toggle}
               hiddenFrom="sm"
               size="sm"
             />
             <Burger
               opened={desktopOpened}
-              onClick={toggleDesktop}
+              onClick={desktopDisclosure.toggle}
               visibleFrom="sm"
               size="sm"
             />
 
             <Text fw={700} size="lg">
-              Momence Assignment - Currency Converter - Michal Filip
+              Currency Converter
             </Text>
           </Group>
         </AppShell.Header>

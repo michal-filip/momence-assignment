@@ -12,12 +12,17 @@ export const QueryDataWrapper: React.FC<QueryDataWrapperProps> = ({
   error,
   children,
 }) => {
-  if (isLoading) return <Loader />;
-  if (error)
+  if (isLoading) {
+    return <Loader />;
+  }
+
+  if (error) {
     return (
       <Alert color="red">
         {error instanceof Error ? error.message : String(error)}
       </Alert>
     );
+  }
+
   return <>{children}</>;
 };

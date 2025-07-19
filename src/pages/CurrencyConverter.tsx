@@ -11,68 +11,82 @@ import { useRatesData } from '../utils/ratesData';
 import { QueryDataWrapper } from '../components/QueryDataWrapper';
 import { StyledPaper } from '../components/StyledPaper';
 
+const baseCurrency = 'CZK';
+
+const formatOriginalAmount = (amount: number | undefined): string => {
+  if (amount === undefined) {
+    return '';
+  }
+
+  // We want to preserve the original precision
+  return amount.toExponential().includes('e')
+    ? amount.toFixed(10).replace(/\.?0+$/, '')
+    : amount.toString();
+};
+
 export const CurrencyConverter: React.FC<{
   defaultFrom?: string;
   defaultTo?: string;
-}> = ({ defaultFrom = 'CZK', defaultTo }) => {
-  const { data, isLoading, error } = useRatesData();
+}> = ({ defaultFrom = baseCurrency, defaultTo = '' }) => {
+  const { data: rates, isLoading, error } = useRatesData();
 
   const currencyOptions = useMemo(() => {
-    const allCodes = data
-      ? Array.from(new Set(data.map((row) => row.Code)))
-      : [];
+    const allCodes = rates?.map((row) => row.Code) || [];
 
-    // Add CZK as the base currency
-    return ['CZK', ...allCodes].map((code) => ({
+    // Add the base currency
+    return [baseCurrency, ...allCodes].map((code) => ({
       value: code,
       label: code,
     }));
-  }, [data]);
+  }, [rates]);
 
-  const [amount, setAmount] = useState<number | ''>('');
+  const [amount, setAmount] = useState<number>();
   const [from, setFrom] = useState(defaultFrom);
-  const [to, setTo] = useState(defaultTo || '');
-  const [result, setResult] = useState<number | null>(null);
+  const [to, setTo] = useState(defaultTo);
+  const [result, setResult] = useState<number>();
+
+  const disabled = !amount || !from || !to || !rates;
 
   const handleAmountChange = (val: string | number) => {
-    // Only allow numbers or empty string
-    setAmount(typeof val === 'number' || val === '' ? val : '');
-    setResult(null);
+    setAmount(typeof val === 'number' ? val : undefined);
+    setResult(undefined);
   };
 
   const handleFromChange = (val: string | null) => {
     setFrom(val || '');
-    setResult(null);
+    setResult(undefined);
   };
 
   const handleToChange = (val: string | null) => {
     setTo(val || '');
-    setResult(null);
+    setResult(undefined);
   };
 
   const handleConvert = () => {
-    if (!Array.isArray(data) || !amount || !from || !to) return;
-    // Handle CZK as base currency
-    let fromRate = 1,
-      toRate = 1;
-    if (from !== 'CZK') {
-      const fromRateObj = data.find((row) => row.Code === from);
+    if (disabled) {
+      return;
+    }
+
+    let fromRate = 1;
+    let toRate = 1;
+
+    if (from !== baseCurrency) {
+      const fromRateObj = rates.find((row) => row.Code === from);
       if (!fromRateObj) return;
       fromRate =
         parseFloat(fromRateObj.Rate.replace(',', '.')) /
         parseFloat(fromRateObj.Amount);
     }
-    if (to !== 'CZK') {
-      const toRateObj = data.find((row) => row.Code === to);
+    if (to !== baseCurrency) {
+      const toRateObj = rates.find((row) => row.Code === to);
       if (!toRateObj) return;
       toRate =
         parseFloat(toRateObj.Rate.replace(',', '.')) /
         parseFloat(toRateObj.Amount);
     }
-    // Convert from -> CZK -> to
-    const czk = (amount as number) * fromRate;
-    const converted = czk / toRate;
-    setResult(Number.isFinite(converted) ? converted : null);
+    // Convert from -> baseCurrency -> to
+    const converted = (amount * fromRate) / toRate;
+    setResult(Number.isFinite(converted) ? converted : undefined);
   };
 
   return (
@@ -94,6 +108,7 @@ export const CurrencyConverter: React.FC<{
               onChange={handleAmountChange}
               min={0}
               required
+              maxLength={10}
             />
             <Select
               label="From"
@@ -112,16 +127,16 @@ export const CurrencyConverter: React.FC<{
               searchable
             />
           </Group>
-          <Button
-            type="submit"
-            disabled={!amount || !from || !to || !Array.isArray(data)}
-          >
+          <Button type="submit" disabled={disabled}>
             Convert
           </Button>
         </form>
-        {result !== null && (
+        {result !== undefined && (
           <Alert color="green" mt="md">
-            {amount} {from} = {result.toFixed(4)} {to}
+            {formatOriginalAmount(amount)} {from} = {result.toFixed(4)} {to}
+            {from !== baseCurrency &&
+              to !== baseCurrency &&
+              ` (conversion via ${baseCurrency})`}
           </Alert>
         )}
       </QueryDataWrapper>
