@@ -52,7 +52,7 @@ export const Layout: React.FC<{
             />
 
             <Text fw={700} size="lg">
-              Currency Converter
+              Currency Converter App
             </Text>
           </Group>
         </AppShell.Header>
