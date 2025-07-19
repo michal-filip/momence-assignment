@@ -1,8 +1,9 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { CurrencyConverter } from '../pages/CurrencyConverter';
 import { MantineProvider } from '@mantine/core';
 import { vi } from 'vitest';
 import { mockRatesData } from './mocks/ratesData';
+import userEvent from '@testing-library/user-event';
 
 vi.mock('../utils/ratesData', () => ({
   useRatesData: () => ({
@@ -30,45 +31,47 @@ describe('CurrencyConverter', () => {
     ).toBeInTheDocument();
   });
 
-  it('performs conversion from CZK to USD', () => {
+  it('performs conversion from CZK to USD', async () => {
     render(
       <MantineProvider>
         <CurrencyConverter defaultFrom="CZK" defaultTo="USD" />
       </MantineProvider>,
     );
-    fireEvent.change(screen.getByRole('textbox', { name: /amount/i }), {
-      target: { value: 100 },
-    });
-    fireEvent.click(screen.getByRole('button', { name: /convert/i }));
+    await userEvent.type(
+      screen.getByRole('textbox', { name: /amount/i }),
+      '100',
+    );
+    await userEvent.click(screen.getByRole('button', { name: /convert/i }));
 
     expect(
       screen.getByText('100 CZK = 4.4444 USD', { exact: false }),
     ).toBeInTheDocument();
   });
 
-  it('performs conversion from USD to EUR', () => {
+  it('performs conversion from USD to EUR', async () => {
     render(
       <MantineProvider>
         <CurrencyConverter defaultFrom="USD" defaultTo="EUR" />
       </MantineProvider>,
     );
-    fireEvent.change(screen.getByRole('textbox', { name: /amount/i }), {
-      target: { value: 10 },
-    });
-    fireEvent.click(screen.getByRole('button', { name: /convert/i }));
+    await userEvent.type(
+      screen.getByRole('textbox', { name: /amount/i }),
+      '10',
+    );
+    await userEvent.click(screen.getByRole('button', { name: /convert/i }));
 
     expect(
       screen.getByText('10 USD = 9.2593 EUR', { exact: false }),
     ).toBeInTheDocument();
   });
 
-  it('shows nothing if required fields are missing', () => {
+  it('shows nothing if required fields are missing', async () => {
     render(
       <MantineProvider>
         <CurrencyConverter />
       </MantineProvider>,
     );
-    fireEvent.click(screen.getByRole('button', { name: /convert/i }));
+    await userEvent.click(screen.getByRole('button', { name: /convert/i }));
 
     expect(screen.queryByText(/=/)).not.toBeInTheDocument();
   });
@@ -83,7 +86,7 @@ describe('CurrencyConverter', () => {
     expect(screen.getByRole('button', { name: /convert/i })).toBeDisabled();
   });
 
-  it('shows correct options in currency selects', () => {
+  it('shows correct options in currency selects', async () => {
     render(
       <MantineProvider>
         <CurrencyConverter />
@@ -91,7 +94,7 @@ describe('CurrencyConverter', () => {
     );
 
     const fromSelects = screen.getAllByLabelText(/from/i);
-    fireEvent.mouseDown(fromSelects[0]);
+    await userEvent.click(fromSelects[0]);
 
     expect(screen.getAllByText('CZK').length).toBeGreaterThan(0);
     expect(screen.getAllByText('USD').length).toBeGreaterThan(0);
