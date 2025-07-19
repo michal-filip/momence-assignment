@@ -10,6 +10,7 @@ import {
 import { useRatesData } from '../utils/ratesData';
 import { QueryDataWrapper } from '../components/QueryDataWrapper';
 import { StyledPaper } from '../components/StyledPaper';
+import { useFavorites } from '../utils/useFavorites';
 
 const baseCurrency = 'CZK';
 
@@ -29,16 +30,18 @@ export const CurrencyConverter: React.FC<{
   defaultTo?: string;
 }> = ({ defaultFrom = baseCurrency, defaultTo = '' }) => {
   const { data: rates, isLoading, error } = useRatesData();
+  const { isFavorite, sortWithFavorites } = useFavorites();
 
   const currencyOptions = useMemo(() => {
     const allCodes = rates?.map((row) => row.Code) || [];
-
     // Add the base currency
-    return [baseCurrency, ...allCodes].map((code) => ({
+    const codes = [baseCurrency, ...allCodes];
+    const sorted = sortWithFavorites(codes, (code) => code);
+    return sorted.map((code) => ({
       value: code,
-      label: code,
+      label: `${code}${isFavorite(code) ? ' ⭐' : ''}`,
     }));
-  }, [rates]);
+  }, [rates, sortWithFavorites, isFavorite]);
 
   const [amount, setAmount] = useState<number>();
   const [from, setFrom] = useState(defaultFrom);

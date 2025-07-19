@@ -22,9 +22,9 @@ describe('CurrencyConverter', () => {
     expect(
       screen.getByRole('textbox', { name: /amount/i }),
     ).toBeInTheDocument();
-    // Use getAllByLabelText and check at least one is present for Mantine Selects
-    expect(screen.getAllByLabelText(/from/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByLabelText(/to/i).length).toBeGreaterThan(0);
+
+    expect(screen.getByRole('textbox', { name: /from/i })).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: /to/i })).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /convert/i }),
     ).toBeInTheDocument();
@@ -40,14 +40,10 @@ describe('CurrencyConverter', () => {
       target: { value: 100 },
     });
     fireEvent.click(screen.getByRole('button', { name: /convert/i }));
-    // Use getAllByText and check at least one matches
+
     expect(
-      screen.getAllByText((content, node) =>
-        node?.textContent
-          ? /100 CZK = 4\.4444 USD/.test(node.textContent)
-          : false,
-      ).length,
-    ).toBeGreaterThan(0);
+      screen.getByText('100 CZK = 4.4444 USD', { exact: false }),
+    ).toBeInTheDocument();
   });
 
   it('performs conversion from USD to EUR', () => {
@@ -60,13 +56,10 @@ describe('CurrencyConverter', () => {
       target: { value: 10 },
     });
     fireEvent.click(screen.getByRole('button', { name: /convert/i }));
+
     expect(
-      screen.getAllByText((content, node) =>
-        node?.textContent
-          ? /10 USD = 9\.2593 EUR/.test(node.textContent)
-          : false,
-      ).length,
-    ).toBeGreaterThan(0);
+      screen.getByText('10 USD = 9.2593 EUR', { exact: false }),
+    ).toBeInTheDocument();
   });
 
   it('shows nothing if required fields are missing', () => {
@@ -76,6 +69,7 @@ describe('CurrencyConverter', () => {
       </MantineProvider>,
     );
     fireEvent.click(screen.getByRole('button', { name: /convert/i }));
+
     expect(screen.queryByText(/=/)).not.toBeInTheDocument();
   });
 
@@ -85,6 +79,7 @@ describe('CurrencyConverter', () => {
         <CurrencyConverter />
       </MantineProvider>,
     );
+
     expect(screen.getByRole('button', { name: /convert/i })).toBeDisabled();
   });
 
@@ -94,10 +89,10 @@ describe('CurrencyConverter', () => {
         <CurrencyConverter />
       </MantineProvider>,
     );
-    // Use getAllByLabelText to get all From selects, then fireEvent on the first
+
     const fromSelects = screen.getAllByLabelText(/from/i);
     fireEvent.mouseDown(fromSelects[0]);
-    // Use getAllByText and check at least one for each currency
+
     expect(screen.getAllByText('CZK').length).toBeGreaterThan(0);
     expect(screen.getAllByText('USD').length).toBeGreaterThan(0);
     expect(screen.getAllByText('EUR').length).toBeGreaterThan(0);

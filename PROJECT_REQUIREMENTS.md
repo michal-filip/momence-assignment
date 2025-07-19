@@ -25,9 +25,3 @@ Overall: Keep the code simple and the UI nice and easy to use for the user.
    1.1 Dependencies should be managed using `yarn`, not using `npm`.
    1.2 App should minimise runtime dependencies and attempt to use lightweight dependencies over heavy ones
    1.3 App should vite and vitest for unit testing
-
-## Non-Functional Requirements
-
-N1. Modular and extensible codebase for adding new features.
-N2. Error handling and robust logging.
-N3. Any external references are configured in some location instead of being hardcoded throughout codebase
